@@ -104,14 +104,14 @@ runs:
     - name: Run `poe ${{ inputs.command }}`
       shell: bash
       run: |
-        poe "${{ inputs.command }}"
+        poe ${{ inputs.command }}
 
     - name: Auto commit changes
       id: auto-commit
       uses: stefanzweifel/git-auto-commit-action@v5
       if: github.ref != 'refs/heads/master'
       with:
-        commit_message: "Auto-committed changes from Poe command `{{ inputs.command }}`"
+        commit_message: "Auto-committed changes from Poe command `${{ inputs.command }}`"
         commit_user_name: Octavia Squidington III
         commit_user_email: octavia-squidington-iii@users.noreply.github.com
 
@@ -122,7 +122,7 @@ runs:
         comment-id: ${{ steps.comment-start.outputs.comment-id }}
         reactions: hooray
         body: >
-          ✅ Poe command `{{ inputs.command }}` completed successfully.
+          ✅ Poe command `${{ inputs.command }}` completed successfully.
 
     - name: Append no-op comment
       if: steps.auto-commit.outputs.changes_detected != 'true'
@@ -131,7 +131,7 @@ runs:
         comment-id: ${{ steps.comment-start.outputs.comment-id }}
         reactions: +1
         body: >
-          🟦 Poe command completed successfully. (No changes.)
+          🟦  Poe command `${{ inputs.command }}` completed successfully. (No changes.)
 
     - name: Append failure comment
       if: failure()
@@ -140,4 +140,4 @@ runs:
         comment-id: ${{ steps.comment-start.outputs.comment-id }}
         reactions: confused
         body: >
-          ❌ Poe command `{{ inputs.command }}` failed. Please inspect the logs.
+          ❌ Poe command `${{ inputs.command }}` failed. Please inspect the logs.
