@@ -1,21 +1,25 @@
 name: Poe Slash Command Processor
 
 description: |
-  Reusable GitHub Action that checks out a PR and executes one or more Poe the Poet commands, then commits changes and comments back on the PR.
+  Reusable GitHub Action that checks out a PR and executes one or more Poe the Poet commands, then commits changes (if any) and comments back on the PR.
 
 inputs:
+  command:
+    description: "Poe command to run"
+    required: true
   pr:
     description: "PR Number"
-    required: true
+    required: false
   comment-id:
     description: "Comment ID (optional, for reply chaining)"
     required: false
-  commands:
-    description: "Newline-delimited list of Poe commands to run"
-    required: true
   github-token:
-    description: "GitHub Token"
+    description: "GitHub Token. Required for CI to run after commits are pushed."
     required: true
+  no-commit:
+    description: "Disable auto-commit step"
+    required: false
+    default: "false"
 
 runs:
   using: "composite"
@@ -48,7 +52,7 @@ runs:
           > Job initiated from slash command. Executing the following Poe tasks:
           >
           > ```
-          > ${{ inputs.commands }}
+          > ${{ inputs.command }}
           > ```
           >
           > [Follow job output.][1]
@@ -72,10 +76,6 @@ runs:
       with:
         python-version: '3.11'
 
-    - name: Create virtual environment
-      shell: bash
-      run: uv venv
-
     - name: Install poethepoet
       shell: bash
       run: uv tool install poethepoet
@@ -84,21 +84,17 @@ runs:
       shell: bash
       run: poe install
 
-    - name: Run specified Poe commands
+    - name: Run `poe ${{ inputs.command }}`
       shell: bash
       run: |
-        echo "${{ inputs.commands }}" | while IFS= read -r line; do
-          if [ -n "$line" ]; then
-            poe "$line"
-          fi
-        done
+        poe "${{ inputs.command }}"
 
     - name: Auto commit changes
       id: auto-commit
       uses: stefanzweifel/git-auto-commit-action@v5
       if: github.ref != 'refs/heads/master'
       with:
-        commit_message: "Auto-committed changes from Poe commands"
+        commit_message: "Auto-committed changes from Poe command `{{ inputs.command }}`"
         commit_user_name: Octavia Squidington III
         commit_user_email: octavia-squidington-iii@users.noreply.github.com
 
@@ -109,7 +105,7 @@ runs:
         comment-id: ${{ steps.comment-start.outputs.comment-id }}
         reactions: hooray
         body: >
-          ✅ Poe commands completed and changes were committed.
+          ✅ Poe command `{{ inputs.command }}` completed successfully.
 
     - name: Append no-op comment
       if: steps.auto-commit.outputs.changes_detected != 'true'
@@ -118,7 +114,7 @@ runs:
         comment-id: ${{ steps.comment-start.outputs.comment-id }}
         reactions: +1
         body: >
-          🟦 Poe commands ran, but no changes were made.
+          🟦 Poe command completed successfully. (No changes.)
 
     - name: Append failure comment
       if: failure()
@@ -127,4 +123,4 @@ runs:
         comment-id: ${{ steps.comment-start.outputs.comment-id }}
         reactions: confused
         body: >
-          ❌ Poe command job failed. Please inspect the logs.
+          ❌ Poe command `{{ inputs.command }}` failed. Please inspect the logs.
