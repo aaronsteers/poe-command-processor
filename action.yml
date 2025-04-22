@@ -20,6 +20,10 @@ inputs:
     description: "Disable auto-commit step"
     required: false
     default: "false"
+  extra-env:
+    description: "Extra environment variables to pass to the Poe command, formatted as newline-delimited 'key=value' pairs."
+    required: false
+    default: ""
 
 runs:
   using: "composite"
@@ -88,6 +92,14 @@ runs:
     - name: Install dependencies
       shell: bash
       run: poe install
+
+    - name: Apply extra environment variables
+      if: ${{ inputs.extra-env != '' }}
+      shell: bash
+      run: |
+        echo "Extra environment variables:
+        echo ${{ inputs.extra-env }}"
+        echo "$line" >> $GITHUB_ENV
 
     - name: Run `poe ${{ inputs.command }}`
       shell: bash
