@@ -29,9 +29,11 @@ runs:
       shell: bash
       run: |
         PR_JSON=$(gh api repos/${{ github.repository }}/pulls/${{ inputs.pr }})
+        echo "::group::👀 Debug PR JSON"
         echo $PR_JSON | jq
         echo $PR_JSON | jq -r .head.repo.full_name
         echo $PR_JSON | jq -r .head.ref
+        echo "::endgroup::"
         echo repo=$(echo $PR_JSON | jq -r .head.repo.full_name) >> $GITHUB_OUTPUT
         echo branch=$(echo $PR_JSON | jq -r .head.ref) >> $GITHUB_OUTPUT
       env:
