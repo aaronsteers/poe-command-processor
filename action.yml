@@ -29,8 +29,11 @@ runs:
       shell: bash
       run: |
         PR_JSON=$(gh api repos/${{ github.repository }}/pulls/${{ inputs.pr }})
-        echo "repo=$(echo \"$PR_JSON\" | jq -r .head.repo.full_name)" >> "$GITHUB_OUTPUT"
-        echo "branch=$(echo \"$PR_JSON\" | jq -r .head.ref)" >> "$GITHUB_OUTPUT"
+        echo $PR_JSON | jq
+        echo $PR_JSON | jq -r .head.repo.full_name
+        echo $PR_JSON | jq -r .head.ref
+        echo repo=$(echo $PR_JSON | jq -r .head.repo.full_name) >> $GITHUB_OUTPUT
+        echo branch=$(echo $PR_JSON | jq -r .head.ref) >> $GITHUB_OUTPUT
       env:
         GH_TOKEN: ${{ inputs.github-token }}
 
