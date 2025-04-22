@@ -116,7 +116,7 @@ runs:
           ✅ Poe command `${{ inputs.command }}` completed successfully.
 
     - name: Append no-op comment
-      if: steps.auto-commit.outputs.changes_detected != 'true'
+      if: inputs.pr && steps.auto-commit.outputs.changes_detected != 'true'
       uses: peter-evans/create-or-update-comment@v4
       with:
         comment-id: ${{ steps.comment-start.outputs.comment-id }}
@@ -125,7 +125,7 @@ runs:
           🟦  Poe command `${{ inputs.command }}` completed successfully. (No changes.)
 
     - name: Append failure comment
-      if: failure()
+      if: inputs.pr && failure()
       uses: peter-evans/create-or-update-comment@v4
       with:
         comment-id: ${{ steps.comment-start.outputs.comment-id }}
