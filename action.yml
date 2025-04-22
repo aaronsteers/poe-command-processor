@@ -98,8 +98,7 @@ runs:
       shell: bash
       run: |
         echo "Extra environment variables:
-        echo ${{ inputs.extra-env }}"
-        echo "$line" >> $GITHUB_ENV
+        echo ${{ inputs.extra-env }} >> $GITHUB_ENV
 
     - name: Run `poe ${{ inputs.command }}`
       shell: bash
