@@ -1,0 +1,130 @@
+name: Poe Slash Command Processor
+
+description: |
+  Reusable GitHub Action that checks out a PR and executes one or more Poe the Poet commands, then commits changes and comments back on the PR.
+
+inputs:
+  pr:
+    description: "PR Number"
+    required: true
+  comment-id:
+    description: "Comment ID (optional, for reply chaining)"
+    required: false
+  commands:
+    description: "Newline-delimited list of Poe commands to run"
+    required: true
+  github-token:
+    description: "GitHub Token"
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - name: Get PR info
+      id: pr-info
+      shell: bash
+      run: |
+        PR_JSON=$(gh api repos/${{ github.repository }}/pulls/${{ inputs.pr }})
+        echo "repo=$(echo \"$PR_JSON\" | jq -r .head.repo.full_name)" >> "$GITHUB_OUTPUT"
+        echo "branch=$(echo \"$PR_JSON\" | jq -r .head.ref)" >> "$GITHUB_OUTPUT"
+      env:
+        GH_TOKEN: ${{ inputs.github-token }}
+
+    - name: Generate run link
+      id: vars
+      shell: bash
+      run: echo "run-url=https://github.com/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" >> "$GITHUB_OUTPUT"
+
+    - name: Post job start comment
+      if: ${{ inputs.comment-id != '' }}
+      uses: peter-evans/create-or-update-comment@v4
+      id: comment-start
+      with:
+        comment-id: ${{ inputs.comment-id }}
+        issue-number: ${{ inputs.pr }}
+        body: |
+          > **Auto-Execution Info**
+          >
+          > Job initiated from slash command. Executing the following Poe tasks:
+          >
+          > ```
+          > ${{ inputs.commands }}
+          > ```
+          >
+          > [Follow job output.][1]
+          >
+          > [1]: ${{ steps.vars.outputs.run-url }}
+
+    - name: Checkout PR
+      uses: actions/checkout@v4
+      with:
+        ref: ${{ steps.pr-info.outputs.branch }}
+        repository: ${{ steps.pr-info.outputs.repo }}
+        token: ${{ inputs.github-token }}
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+
+    - name: Install uv and dependencies
+      uses: astral-sh/setup-uv@v5
+      with:
+        python-version: '3.11'
+
+    - name: Create virtual environment
+      shell: bash
+      run: uv venv
+
+    - name: Install poethepoet
+      shell: bash
+      run: uv tool install poethepoet
+
+    - name: Install dependencies
+      shell: bash
+      run: poe install
+
+    - name: Run specified Poe commands
+      shell: bash
+      run: |
+        echo "${{ inputs.commands }}" | while IFS= read -r line; do
+          if [ -n "$line" ]; then
+            poe "$line"
+          fi
+        done
+
+    - name: Auto commit changes
+      id: auto-commit
+      uses: stefanzweifel/git-auto-commit-action@v5
+      if: github.ref != 'refs/heads/master'
+      with:
+        commit_message: "Auto-committed changes from Poe commands"
+        commit_user_name: Octavia Squidington III
+        commit_user_email: octavia-squidington-iii@users.noreply.github.com
+
+    - name: Append success comment
+      if: steps.auto-commit.outputs.changes_detected == 'true'
+      uses: peter-evans/create-or-update-comment@v4
+      with:
+        comment-id: ${{ steps.comment-start.outputs.comment-id }}
+        reactions: hooray
+        body: >
+          ✅ Poe commands completed and changes were committed.
+
+    - name: Append no-op comment
+      if: steps.auto-commit.outputs.changes_detected != 'true'
+      uses: peter-evans/create-or-update-comment@v4
+      with:
+        comment-id: ${{ steps.comment-start.outputs.comment-id }}
+        reactions: +1
+        body: >
+          🟦 Poe commands ran, but no changes were made.
+
+    - name: Append failure comment
+      if: failure()
+      uses: peter-evans/create-or-update-comment@v4
+      with:
+        comment-id: ${{ steps.comment-start.outputs.comment-id }}
+        reactions: confused
+        body: >
+          ❌ Poe command job failed. Please inspect the logs.
