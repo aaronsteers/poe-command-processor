@@ -20,15 +20,12 @@ inputs:
     description: "Disable auto-commit step"
     required: false
     default: "false"
-  extra-env:
-    description: "Extra environment variables to pass to the Poe command, formatted as newline-delimited 'key=value' pairs."
-    required: false
-    default: ""
 
 runs:
   using: "composite"
   steps:
     - name: Get PR info
+      if: ${{ inputs.pr }}
       id: pr-info
       shell: bash
       run: |
@@ -49,29 +46,31 @@ runs:
       run: echo "run-url=https://github.com/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" >> "$GITHUB_OUTPUT"
 
     - name: Post job start comment
-      if: ${{ inputs.comment-id != '' }}
+      if: ${{ inputs.pr || inputs.comment-id }}
       uses: peter-evans/create-or-update-comment@v4
       id: comment-start
       with:
         comment-id: ${{ inputs.comment-id }}
         issue-number: ${{ inputs.pr }}
         body: |
-          > **Auto-Execution Info**
+          > **Running `poe ${{ inputs.command }}`...**
           >
-          > Job initiated from slash command. Executing the following Poe tasks:
-          >
-          > ```
-          > ${{ inputs.command }}
-          > ```
-          >
-          > [Follow job output.][1]
+          > [Link to job logs.][1]
           >
           > [1]: ${{ steps.vars.outputs.run-url }}
 
     - name: Checkout PR
+      if: ${{ inputs.pr }}
       uses: actions/checkout@v4
       with:
         ref: ${{ steps.pr-info.outputs.branch }}
+        repository: ${{ steps.pr-info.outputs.repo }}
+        token: ${{ inputs.github-token }}
+
+    - name: Checkout default branch (no existing PR)
+      if: ${{ ! inputs.pr }}
+      uses: actions/checkout@v4
+      with:
         repository: ${{ steps.pr-info.outputs.repo }}
         token: ${{ inputs.github-token }}
 
@@ -93,13 +92,6 @@ runs:
       shell: bash
       run: poe install
 
-    - name: Apply extra environment variables
-      if: ${{ inputs.extra-env != '' }}
-      shell: bash
-      run: |
-        echo "Extra environment variables:
-        echo ${{ inputs.extra-env }} >> $GITHUB_ENV
-
     - name: Run `poe ${{ inputs.command }}`
       shell: bash
       run: |
@@ -108,14 +100,14 @@ runs:
     - name: Auto commit changes
       id: auto-commit
       uses: stefanzweifel/git-auto-commit-action@v5
-      if: github.ref != 'refs/heads/master'
+      if: inputs.pr && github.ref != 'refs/heads/master'
       with:
         commit_message: "Auto-committed changes from Poe command `${{ inputs.command }}`"
         commit_user_name: Octavia Squidington III
         commit_user_email: octavia-squidington-iii@users.noreply.github.com
 
     - name: Append success comment
-      if: steps.auto-commit.outputs.changes_detected == 'true'
+      if: inputs.pr && steps.auto-commit.outputs.changes_detected == 'true'
       uses: peter-evans/create-or-update-comment@v4
       with:
         comment-id: ${{ steps.comment-start.outputs.comment-id }}
@@ -140,3 +132,23 @@ runs:
         reactions: confused
         body: >
           ❌ Poe command `${{ inputs.command }}` failed. Please inspect the logs.
+
+    # Create a new PR if no PR was provided
+
+    - name: Create Pull Request
+      if: ${{ ! inputs.pr }}
+      uses: peter-evans/create-pull-request@v7
+      with:
+        title: "Auto-generated PR from `poe ${{ inputs.command }}`"
+        commit-message: "Auto-committed changes from `poe ${{ inputs.command }}`"
+        body: |
+          > ## Output of `poe ${{ inputs.command }}`
+          >
+          > [Link to job logs.][1]
+          >
+          > [1]: ${{ steps.vars.outputs.run-url }}
+        branch: auto-commit/${{ github.sha }}
+        draft: true
+        commit-user-name: Octavia Squidington III
+        commit-user-email: octavia-squidington-iii@users.noreply.github.com
+        token: ${{ inputs.github-token }}
