@@ -1,0 +1,131 @@
+name: Poe Slash Command Processor
+
+description: |
+  Reusable GitHub Action that checks out a PR and executes one or more Poe the Poet commands, then commits changes (if any) and comments back on the PR.
+
+inputs:
+  command:
+    description: "Poe command to run"
+    required: true
+  pr:
+    description: "PR Number"
+    required: false
+  comment-id:
+    description: "Comment ID (optional, for reply chaining)"
+    required: false
+  github-token:
+    description: "GitHub Token. Required for CI to run after commits are pushed."
+    required: true
+  no-commit:
+    description: "Disable auto-commit step"
+    required: false
+    default: "false"
+
+runs:
+  using: "composite"
+  steps:
+    - name: Get PR info
+      id: pr-info
+      shell: bash
+      run: |
+        PR_JSON=$(gh api repos/${{ github.repository }}/pulls/${{ inputs.pr }})
+        echo "::group::👀 Debug PR JSON"
+        echo $PR_JSON | jq
+        echo $PR_JSON | jq -r .head.repo.full_name
+        echo $PR_JSON | jq -r .head.ref
+        echo "::endgroup::"
+        echo repo=$(echo $PR_JSON | jq -r .head.repo.full_name) >> $GITHUB_OUTPUT
+        echo branch=$(echo $PR_JSON | jq -r .head.ref) >> $GITHUB_OUTPUT
+      env:
+        GH_TOKEN: ${{ inputs.github-token }}
+
+    - name: Generate run link
+      id: vars
+      shell: bash
+      run: echo "run-url=https://github.com/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" >> "$GITHUB_OUTPUT"
+
+    - name: Post job start comment
+      if: ${{ inputs.comment-id != '' }}
+      uses: peter-evans/create-or-update-comment@v4
+      id: comment-start
+      with:
+        comment-id: ${{ inputs.comment-id }}
+        issue-number: ${{ inputs.pr }}
+        body: |
+          > **Auto-Execution Info**
+          >
+          > Job initiated from slash command. Executing the following Poe tasks:
+          >
+          > ```
+          > ${{ inputs.command }}
+          > ```
+          >
+          > [Follow job output.][1]
+          >
+          > [1]: ${{ steps.vars.outputs.run-url }}
+
+    - name: Checkout PR
+      uses: actions/checkout@v4
+      with:
+        ref: ${{ steps.pr-info.outputs.branch }}
+        repository: ${{ steps.pr-info.outputs.repo }}
+        token: ${{ inputs.github-token }}
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+
+    - name: Install uv and dependencies
+      uses: astral-sh/setup-uv@v5
+      with:
+        python-version: '3.11'
+
+    - name: Install poethepoet
+      shell: bash
+      run: uv tool install poethepoet
+
+    - name: Install dependencies
+      shell: bash
+      run: poe install
+
+    - name: Run `poe ${{ inputs.command }}`
+      shell: bash
+      run: |
+        poe "${{ inputs.command }}"
+
+    - name: Auto commit changes
+      id: auto-commit
+      uses: stefanzweifel/git-auto-commit-action@v5
+      if: github.ref != 'refs/heads/master'
+      with:
+        commit_message: "Auto-committed changes from Poe command `{{ inputs.command }}`"
+        commit_user_name: Octavia Squidington III
+        commit_user_email: octavia-squidington-iii@users.noreply.github.com
+
+    - name: Append success comment
+      if: steps.auto-commit.outputs.changes_detected == 'true'
+      uses: peter-evans/create-or-update-comment@v4
+      with:
+        comment-id: ${{ steps.comment-start.outputs.comment-id }}
+        reactions: hooray
+        body: >
+          ✅ Poe command `{{ inputs.command }}` completed successfully.
+
+    - name: Append no-op comment
+      if: steps.auto-commit.outputs.changes_detected != 'true'
+      uses: peter-evans/create-or-update-comment@v4
+      with:
+        comment-id: ${{ steps.comment-start.outputs.comment-id }}
+        reactions: +1
+        body: >
+          🟦 Poe command completed successfully. (No changes.)
+
+    - name: Append failure comment
+      if: failure()
+      uses: peter-evans/create-or-update-comment@v4
+      with:
+        comment-id: ${{ steps.comment-start.outputs.comment-id }}
+        reactions: confused
+        body: >
+          ❌ Poe command `{{ inputs.command }}` failed. Please inspect the logs.
