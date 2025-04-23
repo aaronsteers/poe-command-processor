@@ -55,7 +55,7 @@ runs:
 
         # Take just the first line of the command
         command=$(echo "$command" | head -n 1)
-        # Remove 'poe' or '/poe' prefix from command`
+        # Remove 'poe' or '/poe' prefix from command
         command=$(echo "$command" | sed -E '1s/^(\/?poe )?//')
         # Remove leading and trailing whitespace
         command=$(echo "$command" | xargs)
@@ -164,7 +164,7 @@ runs:
           🟦  Poe command `${{ steps.resolve-command.outputs.command }}` completed successfully. (No changes.)
 
     - name: Append failure comment
-      if: inputs.pr && failure()
+      if: failure() && inputs.pr
       uses: peter-evans/create-or-update-comment@v4
       with:
         comment-id: ${{ steps.comment-start.outputs.comment-id }}
