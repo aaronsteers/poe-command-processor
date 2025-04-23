@@ -28,7 +28,10 @@ runs:
     - name: Resolve poe command
       id: resolve-command
       shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.github-token }}
       run: |
+        set -euo pipefail
         if [[ "${{ inputs.command }}" ]]; then
           # Command was provided explicitly
           echo "Using command from input: ${{ inputs.command }}"
