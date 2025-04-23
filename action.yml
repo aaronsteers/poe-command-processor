@@ -5,8 +5,8 @@ description: |
 
 inputs:
   command:
-    description: "Poe command to run"
-    required: true
+    description: "Poe command to run. If not provided, we'll infer the command from the body of the specified comment-id."
+    required: false
   pr:
     description: "PR Number"
     required: false
@@ -15,7 +15,7 @@ inputs:
     required: false
   github-token:
     description: "GitHub Token. Required for CI to run after commits are pushed."
-    required: true
+    required: false
   no-commit:
     description: "Disable auto-commit step"
     required: false
@@ -24,6 +24,45 @@ inputs:
 runs:
   using: "composite"
   steps:
+
+    - name: Resolve poe command
+      id: resolve-command
+      shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.github-token }}
+      run: |
+        set -euo pipefail
+        if [[ "${{ inputs.command }}" ]]; then
+          # Command was provided explicitly
+          echo "Using command from input: ${{ inputs.command }}"
+          command="${{ inputs.command }}"
+        # Command was not provided, so we need to infer it from the comment body
+        elif [[ -z "${{ inputs.comment-id }}" ]]; then
+          echo "No 'command' or 'comment-id' input was provided. At least one is required."
+          exit 1
+        else
+          COMMENT_JSON=$(gh api repos/${{ github.repository }}/issues/comments/${{ inputs.comment-id }})
+          echo "::group::👀 Debug Comment JSON"
+          echo $COMMENT_JSON | jq
+          echo "::endgroup::"
+          command=$(echo $COMMENT_JSON | jq -r .body)
+          if [[ -z "$command" ]]; then
+            echo "No command found in comment body."
+            exit 1
+          fi
+          echo "Using command from comment body: $command"
+        fi
+
+        # Take just the first line of the command
+        command=$(echo "$command" | head -n 1)
+        # Remove 'poe' or '/poe' prefix from command
+        command=$(echo "$command" | sed -E '1s/^(\/?poe )?//')
+        # Remove leading and trailing whitespace
+        command=$(echo "$command" | xargs)
+
+        echo "Resolved command: ${command}"
+        echo command="$command" >> $GITHUB_OUTPUT
+
     - name: Get PR info
       if: ${{ inputs.pr }}
       id: pr-info
@@ -53,7 +92,7 @@ runs:
         comment-id: ${{ inputs.comment-id }}
         issue-number: ${{ inputs.pr }}
         body: |
-          > **Running `poe ${{ inputs.command }}`...**
+          > **Running `poe ${{ steps.resolve-command.outputs.command }}`...**
           >
           > [Link to job logs.][1]
           >
@@ -92,17 +131,17 @@ runs:
       shell: bash
       run: poe install
 
-    - name: Run `poe ${{ inputs.command }}`
+    - name: Run `poe ${{ steps.resolve-command.outputs.command }}`
       shell: bash
       run: |
-        poe ${{ inputs.command }}
+        poe ${{ steps.resolve-command.outputs.command }}
 
     - name: Auto commit changes
       id: auto-commit
       uses: stefanzweifel/git-auto-commit-action@v5
       if: inputs.pr && github.ref != 'refs/heads/master'
       with:
-        commit_message: "Auto-committed changes from Poe command `${{ inputs.command }}`"
+        commit_message: "Auto-committed changes from Poe command `${{ steps.resolve-command.outputs.command }}`"
         commit_user_name: Octavia Squidington III
         commit_user_email: octavia-squidington-iii@users.noreply.github.com
 
@@ -113,7 +152,7 @@ runs:
         comment-id: ${{ steps.comment-start.outputs.comment-id }}
         reactions: hooray
         body: >
-          ✅ Poe command `${{ inputs.command }}` completed successfully.
+          ✅ Poe command `${{ steps.resolve-command.outputs.command }}` completed successfully.
 
     - name: Append no-op comment
       if: inputs.pr && steps.auto-commit.outputs.changes_detected != 'true'
@@ -122,16 +161,16 @@ runs:
         comment-id: ${{ steps.comment-start.outputs.comment-id }}
         reactions: +1
         body: >
-          🟦  Poe command `${{ inputs.command }}` completed successfully. (No changes.)
+          🟦  Poe command `${{ steps.resolve-command.outputs.command }}` completed successfully. (No changes.)
 
     - name: Append failure comment
-      if: inputs.pr && failure()
+      if: failure() && inputs.pr
       uses: peter-evans/create-or-update-comment@v4
       with:
         comment-id: ${{ steps.comment-start.outputs.comment-id }}
         reactions: confused
         body: >
-          ❌ Poe command `${{ inputs.command }}` failed. Please inspect the logs.
+          ❌ Poe command `${{ steps.resolve-command.outputs.command }}` failed. Please inspect the logs.
 
     # Create a new PR if no PR was provided
 
@@ -139,13 +178,13 @@ runs:
       if: ${{ ! inputs.pr }}
       uses: peter-evans/create-pull-request@v7
       with:
-        title: "Auto-generated PR: `poe ${{ inputs.command }}`"
-        commit-message: "Auto-committed changes from `poe ${{ inputs.command }}`"
+        title: "Auto-generated PR: `poe ${{ steps.resolve-command.outputs.command }}`"
+        commit-message: "Auto-committed changes from `poe ${{ steps.resolve-command.outputs.command }}`"
         body: |
-          ## Output of `poe ${{ inputs.command }}`
+          ## Output of `poe ${{ steps.resolve-command.outputs.command }}`
 
           This PR was automatically generated by the Poe GitHub Action.
-          It contains the output of the command `${{ inputs.command }}`.
+          It contains the output of the command `${{ steps.resolve-command.outputs.command }}`.
           Please review the changes and consider merging them if they are acceptable.
 
           [Link to job logs.][1]
