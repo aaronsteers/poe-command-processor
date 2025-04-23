@@ -1,7 +1,10 @@
 name: Poe Slash Command Processor
-
 description: |
-  Reusable GitHub Action that checks out a PR and executes one or more Poe the Poet commands, then commits changes (if any) and comments back on the PR.
+  Executes a PoeThePoet command. Designed to be used in slash commands, and can auto-commit changes back to the PR's branch.
+branding:
+  icon: check-circle
+  color: blue
+
 
 inputs:
   command:
