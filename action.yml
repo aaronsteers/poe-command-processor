@@ -149,7 +149,7 @@ runs:
         commit_user_email: octavia-squidington-iii@users.noreply.github.com
 
     - name: Append success comment
-      if: inputs.pr && steps.auto-commit.outputs.changes_detected == 'true'
+      if: steps.comment-start.outputs.comment-id && steps.auto-commit.outputs.changes_detected == 'true'
       uses: peter-evans/create-or-update-comment@v4
       with:
         comment-id: ${{ steps.comment-start.outputs.comment-id }}
@@ -158,7 +158,7 @@ runs:
           ✅ Poe command `${{ steps.resolve-command.outputs.command }}` completed successfully.
 
     - name: Append no-op comment
-      if: inputs.pr && steps.auto-commit.outputs.changes_detected != 'true'
+      if: steps.comment-start.outputs.comment-id && steps.auto-commit.outputs.changes_detected != 'true'
       uses: peter-evans/create-or-update-comment@v4
       with:
         comment-id: ${{ steps.comment-start.outputs.comment-id }}
@@ -167,7 +167,7 @@ runs:
           🟦  Poe command `${{ steps.resolve-command.outputs.command }}` completed successfully. (No changes.)
 
     - name: Append failure comment
-      if: failure() && inputs.pr
+      if: failure() && steps.comment-start.outputs.comment-id
       uses: peter-evans/create-or-update-comment@v4
       with:
         comment-id: ${{ steps.comment-start.outputs.comment-id }}
@@ -179,6 +179,7 @@ runs:
 
     - name: Create Pull Request
       if: ${{ ! inputs.pr }}
+      id: create-pr
       uses: peter-evans/create-pull-request@v7
       with:
         title: "Auto-generated PR: `poe ${{ steps.resolve-command.outputs.command }}`"
@@ -198,3 +199,13 @@ runs:
         commit-user-name: Octavia Squidington III
         commit-user-email: octavia-squidington-iii@users.noreply.github.com
         token: ${{ inputs.github-token }}
+
+    - name: Append PR link to comment
+      if: ${{ steps.comment-start.outputs.comment-id && ! inputs.pr && steps.create-pr.outputs.pull-request-url }}
+      uses: peter-evans/create-or-update-comment@v4
+      with:
+        comment-id: ${{ steps.comment-start.outputs.comment-id }}
+        body: >
+          > 🚀 PR Created:
+          >
+          > - ${{ steps.create-pr.outputs.pull-request-url }}
