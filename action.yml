@@ -205,7 +205,8 @@ runs:
       uses: peter-evans/create-or-update-comment@v4
       with:
         comment-id: ${{ steps.comment-start.outputs.comment-id }}
-        body: >
+        body: |
+          >
           > 🚀 PR Created:
           >
           > - ${{ steps.create-pr.outputs.pull-request-url }}
