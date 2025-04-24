@@ -127,6 +127,7 @@ on:
         required: false
 
 permissions:
+  contents: write
   pull-requests: write
   issues: write
 
@@ -170,7 +171,6 @@ on:
         required: false
 
 permissions:
-  contents: write
   pull-requests: write
   issues: write
 
