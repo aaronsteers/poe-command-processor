@@ -56,8 +56,9 @@ If the comment body is `/poe lint`, the action will run `poe lint`.
 
 ## Requirements
 
-- Your repository must use [Poe the Poet](https://github.com/nat-n/poethepoet) and have a valid `pyproject.toml` with Poe tasks defined.
+- Your repository must use [Poe the Poet](https://github.com/nat-n/poethepoet) and have a valid `pyproject.toml`,  `poe_tasks.toml`, or similar config file containing the project's Poe tasks.
 - The action sets up Python 3.11 and installs dependencies using [uv](https://github.com/astral-sh/uv).
+- Your project should have a poe task named `install` which will run before any other requested command.
 - The `github-token` input is required for committing changes and posting comments.
 
 ## Example Usage
