@@ -26,7 +26,7 @@ A GitHub Action to execute [Poe the Poet](https://github.com/nat-n/poethepoet) c
 
 ```yaml
 - name: Run Poe Command
-  uses: ajsteers/poe-command-processor@v1
+  uses: aaronsteers/poe-command-processor@v1
   with:
     command: "lint"
     github-token: ${{ secrets.GITHUB_TOKEN }}
@@ -39,7 +39,7 @@ This action is designed to work with slash commands in PR comments. If you omit 
 
 ```yaml
 - name: Run Poe Command from Comment
-  uses: ajsteers/poe-command-processor@v1
+  uses: aaronsteers/poe-command-processor@v1
   with:
     comment-id: ${{ github.event.comment.id }}
     pr: ${{ github.event.issue.number }}
