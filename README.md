@@ -61,14 +61,15 @@ If the comment body is `/poe lint`, the action will run `poe lint`.
 - Your project should have a poe task named `install` which will run before any other requested command.
 - The `github-token` input is required for committing changes and posting comments.
 
-## Example Usage
+## Sample Workflows
+
+### Sample Poe Slash Command (Generic)
 
 <details>
-<summary>Show/Hide Sample Poe Workflow File</summary>
-
-`.github/workflows/poe-command.yml`
+<summary>Show/Hide Sample Poe Workflow Files</summary>
 
 ```yaml
+# .github/workflows/poe-command.yml:
 name: On-Demand Poe Task
 
 on:
@@ -91,8 +92,7 @@ permissions:
 jobs:
   run-poe-command:
     env:
-      GCP_GSM_CREDENTIALS: ${{ secrets.GCP_GSM_CREDENTIALS }}
-      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      SOME_ENV_VAR: ${{ secrets.some_value }}
     runs-on: ubuntu-latest
     steps:
       - name: Run Poe Slash Command Processor
@@ -100,17 +100,107 @@ jobs:
         with:
           pr: ${{ github.event.inputs.pr }}
           comment-id: ${{ github.event.inputs.comment-id }}
-          github-token: ${{ secrets.GH_PAT_MAINTENANCE_OCTAVIA }}
+          github-token: ${{ secrets.MY_GH_PAT_TOKEN }}
 ```
 
 </details>
 
+### Sample Auto-Format Slash Command
+
+<details>
+<summary>Show/Hide Auto-Format Workflow File</summary>
+
+```yaml
+# .github/workflows/format-command.yml:
+name: On-Demand Format Task
+
+on:
+  workflow_dispatch:
+    inputs:
+      pr:
+        description: "PR Number. If omitted, a new PR will be created."
+        type: string
+        required: false
+      comment-id:
+        description: "Comment ID (Optional)"
+        type: string
+        required: false
+
+permissions:
+  pull-requests: write
+  issues: write
+
+jobs:
+  run-poe-command:
+    env:
+      SOME_ENV_VAR: ${{ secrets.some_value }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Run Poe Slash Command Processor
+        uses: aaronsteers/poe-command-processor@v1
+        with:
+          command: format
+          pr: ${{ github.event.inputs.pr }}
+          comment-id: ${{ github.event.inputs.comment-id }}
+          github-token: ${{ secrets.MY_GH_PAT_TOKEN }}
+```
+
+</details>
+
+
+### Sample On-Demand Test Slash Command
+
+<details>
+<summary>Show/Hide Sample Test Workflow File</summary>
+
+```yaml
+# .github/workflows/test-command.yml:
+name: On-Demand Test Task
+
+on:
+  workflow_dispatch:
+    inputs:
+      pr:
+        description: "PR Number. If omitted, a new PR will be created."
+        type: string
+        required: false
+      comment-id:
+        description: "Comment ID (Optional)"
+        type: string
+        required: false
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+
+jobs:
+  run-poe-command:
+    env:
+      SOME_ENV_VAR: ${{ secrets.some_value }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Run Poe Slash Command Processor
+        uses: aaronsteers/poe-command-processor@v1
+        with:
+          command: test
+          no-commit: "true"  # No changes expected from 'test' task
+          pr: ${{ github.event.inputs.pr }}
+          comment-id: ${{ github.event.inputs.comment-id }}
+          github-token: ${{ secrets.MY_GH_PAT_TOKEN }}
+```
+
+</details>
+
+
+### Sample Slash Command Dispatch Workflow
+
 <details>
 <summary>Show/Hide Sample Slash Command Dispatch File</summary>
 
-`.github/workflows/slash-command-dispatch.yml`
 
 ```yaml
+# .github/workflows/slash-command-dispatch.yml:
 name: Slash Command Dispatch
 
 on:
@@ -132,6 +222,8 @@ jobs:
           issue-type: both
           commands: |
             poe
+            format
+            test
           static-args: |
             comment-id=${{ github.event.comment.id }}
             pr=${{ github.event.issue.pull_request != null && github.event.issue.number || '' }}
