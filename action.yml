@@ -166,7 +166,7 @@ runs:
         comment-id: ${{ steps.comment-start.outputs.comment-id }}
         reactions: hooray
         body: >
-          ✅ Poe command `${{ steps.resolve-command.outputs.command }}` completed successfully.
+          ✅ Poe command `${{ steps.resolve-command.outputs.command }}` completed successfully. (${{ steps.auto-commit.outputs.commit_hash }})
 
     - name: Append no-op comment
       if: >
@@ -177,7 +177,7 @@ runs:
         comment-id: ${{ steps.comment-start.outputs.comment-id }}
         reactions: +1
         body: >
-          🟦  Poe command `${{ steps.resolve-command.outputs.command }}` completed successfully. (No changes.)
+          🟦  Poe command `${{ steps.resolve-command.outputs.command }}` completed successfully.
 
     - name: Append failure comment
       if: failure() && steps.comment-start.outputs.comment-id
