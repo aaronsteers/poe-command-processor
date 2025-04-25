@@ -132,8 +132,8 @@ runs:
 
     - name: Install dependencies
       shell: bash
-      run: poe install
-
+      run: |
+        poe install || echo "Failed 'poe install' or the task does not exist. Continuing..."
     - name: Run `poe ${{ steps.resolve-command.outputs.command }}`
       shell: bash
       run: |
