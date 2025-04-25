@@ -204,7 +204,7 @@ runs:
           [Link to job logs.][1]
 
           [1]: ${{ steps.vars.outputs.run-url }}
-        branch: auto-commit/${{ github.sha }}
+        branch: auto-commit/poe-processor-${{ github.run_id }}
         draft: true
         commit-user-name: Octavia Squidington III
         commit-user-email: octavia-squidington-iii@users.noreply.github.com
