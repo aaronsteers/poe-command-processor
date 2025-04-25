@@ -121,10 +121,15 @@ runs:
       with:
         python-version: '3.11'
 
-    - name: Install uv and dependencies
+    - name: Install uv
       uses: astral-sh/setup-uv@v5
       with:
         python-version: '3.11'
+
+    - name: Install Poetry
+      uses: Gr1N/setup-poetry@v9
+      with:
+        poetry-version: "2.1.2"
 
     - name: Install poethepoet
       shell: bash
