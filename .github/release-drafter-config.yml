@@ -1,0 +1,42 @@
+# Configuration for Release Drafter workflow
+name-template: "v$RESOLVED_VERSION"
+tag-template: "v$RESOLVED_VERSION"
+categories:
+  - title: "🚀 Features"
+    labels:
+      - "feature"
+      - "enhancement"
+  - title: "🐛 Bug Fixes"
+    labels:
+      - "fix"
+      - "bugfix"
+      - "bug"
+  - title: "🧰 Maintenance"
+    labels:
+      - "chore"
+      - "maintenance"
+      - "documentation"
+change-template: "- $TITLE @$AUTHOR (#$NUMBER)"
+change-title-escapes: '\<*_&'
+# You can add # and @ to disable mentions, and add ` to disable code blocks
+version-resolver:
+  default: patch
+  major:
+    labels:
+    # We don't auto-bump major versions. Needs to be done manually.
+  minor:
+    labels:
+      - "feature"
+      - "enhancement"
+  patch:
+    labels:
+      - "patch"
+      - "bugfix"
+      - "bug"
+      - "chore"
+      - "maintenance"
+      - "documentation"
+template: |
+  ## Changes
+
+  $CHANGES
