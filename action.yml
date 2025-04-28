@@ -116,23 +116,36 @@ runs:
         repository: ${{ steps.pr-info.outputs.repo }}
         token: ${{ inputs.github-token }}
 
+    - name: Fetch tool versions
+      id: tool-versions
+      continue-on-error: true
+      uses: marocchino/tool-versions-action@v1
+
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
-        python-version: '3.11'
+        # Use the provided Python version or the default one
+        python-version: ${{ steps.tool-versions.outputs.python || '3.11' }}
 
     - name: Install uv
       uses: astral-sh/setup-uv@v5
       with:
-        python-version: '3.11'
+        # Set up the provided version or the latest if not specified
+        version: ${{ steps.tool-versions.outputs.uv | 'latest' }}
+        # Use the provided Python version or the default one
+        python-version: ${{ steps.tool-versions.outputs.python || '3.11' }}
 
     - name: Install Poetry
       uses: Gr1N/setup-poetry@v9
       with:
-        poetry-version: "2.1.2"
+        # Set up the provided version or the latest if not specified
+        poetry-version: ${{ steps.tool-versions.outputs.poetry || '' }}
 
     - name: Install poethepoet
       shell: bash
+      # Currently, we just install the latest version of poethepoet.
+      # This should be fine (for now) since Poe changes are generally
+      # backward compatible.
       run: uv tool install poethepoet
 
     - name: Install dependencies
