@@ -60,7 +60,17 @@ If the comment body is `/poe lint`, the action will run `poe lint`.
 - The action sets up Python 3.11 and installs dependencies using [uv](https://github.com/astral-sh/uv).
 - Your project should have a poe task named `install` which will run before any other requested command.
 - The `github-token` input is required for committing changes and posting comments.
-- If a `.tool-versions` file exists in the root of your repository, this action will automatically use it to determine the versions of `poetry`, `python`, and `uv`, provided matching entries are found. This behavior is powered by the [marocchino/tool-versions-action](https://github.com/marocchino/tool-versions-action). No additional configuration is required to enable this feature.
+- Optional: If a `.tool-versions` file exists in the root of your repository, this action will automatically use it to determine the versions of `poetry`, `python`, and `uv`, provided matching entries are found. (See below.)
+
+### Tool Versions
+
+This action will attempt to use a `.tool-versions` file in your repo, if one esists. This behavior is powered by the [marocchino/tool-versions-action](https://github.com/marocchino/tool-versions-action). No additional configuration is required to enable this feature.
+
+If a `.tool-versions` file does not exist, or doesn't have versions specified, we will try with the following defaults:
+
+- `uv` - Default to latest version
+- `poetry` - Default to latest version
+- `python` - Default to version 3.11.
 
 ## Sample Workflows
 
