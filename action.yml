@@ -159,6 +159,7 @@ runs:
       # sections in the logs.
       shell: bash
       run: |
+        # Printing Pre-Run Marker
         echo "------------------------------------"
         echo "------------------------------------"
         echo "-- Running Command: 'poe ${{ steps.resolve-command.outputs.command }}' --"
@@ -174,6 +175,7 @@ runs:
       if: always()
       shell: bash
       run: |
+        # Printing Post-Run Marker
         echo "------------------------------------"
         echo "------------------------------------"
         echo "-- Execution Completed: 'poe ${{ steps.resolve-command.outputs.command }}' --"
@@ -186,8 +188,6 @@ runs:
       if: >
         inputs.no-commit != 'true'
         && inputs.pr
-        && github.ref != 'refs/heads/master'
-        && github.ref != 'refs/heads/main'
       with:
         commit_message: "Auto-committed changes from Poe command `${{ steps.resolve-command.outputs.command }}`"
         commit_user_name: Octavia Squidington III
