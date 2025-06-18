@@ -106,6 +106,7 @@ runs:
       uses: actions/checkout@v4
       with:
         ref: ${{ steps.pr-info.outputs.branch }}
+        submodules: true  # Initialize submodules if needed
         repository: ${{ steps.pr-info.outputs.repo }}
         token: ${{ inputs.github-token }}
 
