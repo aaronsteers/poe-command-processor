@@ -161,7 +161,7 @@ runs:
       run: |
         echo "------------------------------------"
         echo "------------------------------------"
-        echo "-- Running Command: `poe ${{ steps.resolve-command.outputs.command }}` --"
+        echo "-- Running Command: 'poe ${{ steps.resolve-command.outputs.command }}' --"
         echo "------------------------------------"
         echo "------------------------------------"
 
@@ -176,7 +176,7 @@ runs:
       run: |
         echo "------------------------------------"
         echo "------------------------------------"
-        echo "-- Execution Completed: `poe ${{ steps.resolve-command.outputs.command }}` --"
+        echo "-- Execution Completed: 'poe ${{ steps.resolve-command.outputs.command }}' --"
         echo "------------------------------------"
         echo "------------------------------------"
 
