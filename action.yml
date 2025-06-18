@@ -188,8 +188,6 @@ runs:
       if: >
         inputs.no-commit != 'true'
         && inputs.pr
-        && steps.pr-info.outputs.branch != 'refs/heads/master'
-        && steps.pr-info.outputs.branch != 'refs/heads/main'
       with:
         commit_message: "Auto-committed changes from Poe command `${{ steps.resolve-command.outputs.command }}`"
         commit_user_name: Octavia Squidington III
