@@ -132,7 +132,7 @@ runs:
       uses: astral-sh/setup-uv@v5
       with:
         # Set up the provided version or the latest if not specified
-        version: ${{ steps.tool-versions.outputs.uv | 'latest' }}
+        version: ${{ steps.tool-versions.outputs.uv || 'latest' }}
         # Use the provided Python version or the default one
         python-version: ${{ steps.tool-versions.outputs.python || '3.11' }}
 
