@@ -152,10 +152,32 @@ runs:
       shell: bash
       run: |
         poe install || echo "Failed 'poe install' or the task does not exist. Continuing..."
+
+    - name: Print Pre-Run Marker
+      # Pre-run and post-run markers just help the reader find the relevant
+      # sections in the logs.
+      shell: bash
+      run: |
+        echo "------------------------------------"
+        echo "------------------------------------"
+        echo "-- Running Command: `poe ${{ steps.resolve-command.outputs.command }}` --"
+        echo "------------------------------------"
+        echo "------------------------------------"
+
     - name: Run `poe ${{ steps.resolve-command.outputs.command }}`
       shell: bash
       run: |
         poe ${{ steps.resolve-command.outputs.command }}
+
+    - name: Print Post-Run Marker
+      if: always()
+      shell: bash
+      run: |
+        echo "------------------------------------"
+        echo "------------------------------------"
+        echo "-- Execution Completed: `poe ${{ steps.resolve-command.outputs.command }}` --"
+        echo "------------------------------------"
+        echo "------------------------------------"
 
     - name: Auto commit changes
       id: auto-commit
@@ -188,7 +210,7 @@ runs:
       uses: peter-evans/create-or-update-comment@v4
       with:
         comment-id: ${{ steps.comment-start.outputs.comment-id }}
-        reactions: +1
+        reactions: "+1"
         body: >
           🟦  Poe command `${{ steps.resolve-command.outputs.command }}` completed successfully.
 
