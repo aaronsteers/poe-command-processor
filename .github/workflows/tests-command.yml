@@ -33,6 +33,11 @@ jobs:
   run-format-fix:
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
       - name: Run `poe format-fix` [Poe Command Processor]
         uses: ./
         with:
