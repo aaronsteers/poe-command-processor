@@ -34,7 +34,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Run `poe format-fix` [Poe Command Processor]
-        uses: ./action.yml
+        uses: ./
         with:
           pr: ${{ github.event.inputs.pr || github.event.pull_request.number }}
           comment-id: ${{ github.event.inputs.comment-id }}
