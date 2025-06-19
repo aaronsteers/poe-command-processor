@@ -107,7 +107,7 @@ runs:
         comment-id: ${{ inputs.comment-id }}
         issue-number: ${{ inputs.pr }}
         body: |
-          > ${{ inputs.start-message || ('**Running `poe' + steps.resolve-command.outputs.command + '`...**') }}
+          > ${{ inputs.start-message || format('**Running `poe {0}`...**', steps.resolve-command.outputs.command) }}
           >
           > [Link to job logs.](${{ steps.vars.outputs.run-url }})
 
