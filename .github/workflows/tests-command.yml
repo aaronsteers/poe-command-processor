@@ -1,6 +1,8 @@
-name: Format Fix (On-Demand)
+name: Test Action
 
 on:
+  pull_request:
+    types: [ready_for_review]
   workflow_dispatch:
     inputs:
       # The following 4 inputs are always passed by the Slash Command Dispatch:
@@ -34,7 +36,7 @@ jobs:
       - name: Run `poe format-fix` [Poe Command Processor]
         uses: ./action.yml
         with:
-          pr: ${{ github.event.inputs.pr }}
+          pr: ${{ github.event.inputs.pr || github.event.pull_request.number }}
           comment-id: ${{ github.event.inputs.comment-id }}
-          github-token: ${{ secrets.GH_PAT_MAINTENANCE_OCTAVIA }}
+          github-token: ${{ github.token }}
           command: test
