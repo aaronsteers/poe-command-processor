@@ -26,17 +26,11 @@ inputs:
   start-message:
     description: "Message to include in the start comment"
     required: false
-    default: |
-      **Let's go!**
-
-      I hope this works!
+    default: ""
   success-message:
     description: "Message to include in the success comment"
     required: false
-    default: |
-      Everything went great!
-
-      I'm super happy about it.
+    default: ""
   failure-message:
     description: "Message to include in the failure comment"
     required: false
@@ -229,7 +223,7 @@ runs:
         comment-id: ${{ steps.comment-start.outputs.comment-id }}
         reactions: "+1"
         body: |
-          ${{ inputs.success-message || format(' 🟦 Poe command `{0}` completed successfully.', steps.resolve-command.outputs.command) }}
+          > ${{ inputs.success-message || format(' 🟦 Poe command `{0}` completed successfully.', steps.resolve-command.outputs.command) }}
 
     - name: Append failure comment
       if: failure() && steps.comment-start.outputs.comment-id
