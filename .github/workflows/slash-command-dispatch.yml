@@ -19,7 +19,7 @@ jobs:
         id: scd
         uses: peter-evans/slash-command-dispatch@v3
         with:
-          token: ${{ secrets.GH_PAT_MAINTENANCE_OCTAVIA }}
+          token: ${{ github.token }}
           permission: write
           dispatch-type: workflow
           issue-type: both
