@@ -38,7 +38,7 @@ jobs:
         with:
           fetch-depth: 1
 
-      - name: Run `poe format-fix` [Poe Command Processor]
+      - name: Run `poe test` [Poe Command Processor]
         uses: ./
         with:
           pr: ${{ github.event.inputs.pr || github.event.pull_request.number }}
