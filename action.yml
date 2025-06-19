@@ -222,7 +222,10 @@ runs:
         comment-id: ${{ steps.comment-start.outputs.comment-id }}
         reactions: "+1"
         body: |
-          ${{ inputs.success-message || (' 🟦  Poe command `' + steps.resolve-command.outputs.command + '` completed successfully.') }}
+          ${{ inputs.success-message || format(
+            ' 🟦 Poe command `{0}` completed successfully.',
+            steps.resolve-command.outputs.command
+          ) }}
 
     - name: Append failure comment
       if: failure() && steps.comment-start.outputs.comment-id
@@ -231,7 +234,10 @@ runs:
         comment-id: ${{ steps.comment-start.outputs.comment-id }}
         reactions: confused
         body: >
-          ${{ inputs.failure-message || ('❌ Poe command `' + steps.resolve-command.outputs.command + '` failed. Please inspect the logs.') }}
+          ${{ inputs.failure-message || format(
+            '❌ Poe command `{0}` failed. Please inspect the logs.',
+            steps.resolve-command.outputs.command
+          ) }}
 
     # Create a new PR if no PR was provided
 
@@ -251,9 +257,8 @@ runs:
           It contains the output of the command `${{ steps.resolve-command.outputs.command }}`.
           Please review the changes and consider merging them if they are acceptable.
 
-          [Link to job logs.][1]
+          [Link to job logs.](${{ steps.vars.outputs.run-url }})
 
-          [1]: ${{ steps.vars.outputs.run-url }}
         branch: auto-commit/poe-processor-${{ github.run_id }}
         draft: true
         commit-user-name: Octavia Squidington III
