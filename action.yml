@@ -26,11 +26,17 @@ inputs:
   start-message:
     description: "Message to include in the start comment"
     required: false
-    default: ""
+    default: |
+      **Let's go!**
+
+      I hope this works!
   success-message:
     description: "Message to include in the success comment"
     required: false
-    default: ""
+    default: |
+      Everything went great!
+
+      I'm super happy about it.
   failure-message:
     description: "Message to include in the failure comment"
     required: false
