@@ -222,10 +222,7 @@ runs:
         comment-id: ${{ steps.comment-start.outputs.comment-id }}
         reactions: "+1"
         body: |
-          ${{ inputs.success-message || format(
-            ' 🟦 Poe command `{0}` completed successfully.',
-            steps.resolve-command.outputs.command
-          ) }}
+          ${{ inputs.success-message || format(' 🟦 Poe command `{0}` completed successfully.', steps.resolve-command.outputs.command) }}
 
     - name: Append failure comment
       if: failure() && steps.comment-start.outputs.comment-id
@@ -234,10 +231,7 @@ runs:
         comment-id: ${{ steps.comment-start.outputs.comment-id }}
         reactions: confused
         body: >
-          ${{ inputs.failure-message || format(
-            '❌ Poe command `{0}` failed. Please inspect the logs.',
-            steps.resolve-command.outputs.command
-          ) }}
+          ${{ inputs.failure-message || format('❌ Poe command `{0}` failed. Please inspect the logs.', steps.resolve-command.outputs.command) }}
 
     # Create a new PR if no PR was provided
 
