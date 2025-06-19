@@ -110,6 +110,7 @@ runs:
           > ${{ inputs.start-message || format('**Running `poe {0}`...**', steps.resolve-command.outputs.command) }}
           >
           > [Link to job logs.](${{ steps.vars.outputs.run-url }})
+          >
 
     - name: Checkout PR
       if: inputs.pr
