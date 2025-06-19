@@ -23,6 +23,18 @@ inputs:
     description: "Disable auto-commit step"
     required: false
     default: "false"
+  start-message:
+    description: "Message to include in the start comment"
+    required: false
+    default: ""
+  success-message:
+    description: "Message to include in the success comment"
+    required: false
+    default: ""
+  failure-message:
+    description: "Message to include in the failure comment"
+    required: false
+    default: ""
 
 runs:
   using: "composite"
@@ -95,11 +107,10 @@ runs:
         comment-id: ${{ inputs.comment-id }}
         issue-number: ${{ inputs.pr }}
         body: |
-          > **Running `poe ${{ steps.resolve-command.outputs.command }}`...**
+          > ${{ inputs.start-message || format('**Running `poe {0}`...**', steps.resolve-command.outputs.command) }}
           >
-          > [Link to job logs.][1]
+          > [Link to job logs.](${{ steps.vars.outputs.run-url }})
           >
-          > [1]: ${{ steps.vars.outputs.run-url }}
 
     - name: Checkout PR
       if: inputs.pr
@@ -202,18 +213,17 @@ runs:
         comment-id: ${{ steps.comment-start.outputs.comment-id }}
         reactions: hooray
         body: >
-          ✅ Poe command `${{ steps.resolve-command.outputs.command }}` completed successfully. (${{ steps.auto-commit.outputs.commit_hash }})
+          🤖 Auto-commit successful: ${{ steps.auto-commit.outputs.commit_hash }}
 
     - name: Append no-op comment
       if: >
         steps.comment-start.outputs.comment-id
-        && steps.auto-commit.outputs.changes_detected != 'true'
       uses: peter-evans/create-or-update-comment@v4
       with:
         comment-id: ${{ steps.comment-start.outputs.comment-id }}
         reactions: "+1"
-        body: >
-          🟦  Poe command `${{ steps.resolve-command.outputs.command }}` completed successfully.
+        body: |
+          > ${{ inputs.success-message || format(' 🟦 Poe command `{0}` completed successfully.', steps.resolve-command.outputs.command) }}
 
     - name: Append failure comment
       if: failure() && steps.comment-start.outputs.comment-id
@@ -222,7 +232,7 @@ runs:
         comment-id: ${{ steps.comment-start.outputs.comment-id }}
         reactions: confused
         body: >
-          ❌ Poe command `${{ steps.resolve-command.outputs.command }}` failed. Please inspect the logs.
+          ${{ inputs.failure-message || format('❌ Poe command `{0}` failed. Please inspect the logs.', steps.resolve-command.outputs.command) }}
 
     # Create a new PR if no PR was provided
 
@@ -242,9 +252,8 @@ runs:
           It contains the output of the command `${{ steps.resolve-command.outputs.command }}`.
           Please review the changes and consider merging them if they are acceptable.
 
-          [Link to job logs.][1]
+          [Link to job logs.](${{ steps.vars.outputs.run-url }})
 
-          [1]: ${{ steps.vars.outputs.run-url }}
         branch: auto-commit/poe-processor-${{ github.run_id }}
         draft: true
         commit-user-name: Octavia Squidington III

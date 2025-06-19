@@ -1,0 +1,47 @@
+name: Test Action
+
+on:
+  pull_request:
+    types: [ready_for_review]
+  workflow_dispatch:
+    inputs:
+      # The following 4 inputs are always passed by the Slash Command Dispatch:
+      repo:
+        description: Repo Name. Ignored.
+        type: choice
+        required: false
+        default: airbytehq/airbyte-enterprise
+        options:
+          - airbytehq/airbyte-enterprise
+      gitref:
+        description: Git Ref. Ignored.
+        required: false
+      comment-id:
+        description: Comment ID. Optional.
+        required: false
+      pr:
+        description: PR Number.
+        type: number
+        required: false
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+
+jobs:
+  run-format-fix:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Run `poe test` [Poe Command Processor]
+        uses: ./
+        with:
+          pr: ${{ github.event.inputs.pr || github.event.pull_request.number }}
+          comment-id: ${{ github.event.inputs.comment-id }}
+          github-token: ${{ github.token }}
+          command: test

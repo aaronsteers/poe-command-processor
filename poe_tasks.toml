@@ -1,0 +1,3 @@
+[tasks]
+test = "echo 'Dummy tests...'"
+test-fail = "exit 1"
