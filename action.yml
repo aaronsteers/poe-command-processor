@@ -179,13 +179,17 @@ runs:
 
     - name: Run `poe ${{ steps.resolve-command.outputs.command }}`
       shell: bash
+      id: run-poe-task
       run: |
+        set -euo pipefail
+
+        set +e  # Temporarily disable exit on error to capture exit code
+
         poe ${{ steps.resolve-command.outputs.command }}
 
-    - name: Print Post-Run Marker
-      if: always()
-      shell: bash
-      run: |
+        EXIT_CODE=$?
+        set -e  # Re-enable exit on error
+
         # Printing Post-Run Marker
         echo "------------------------------------"
         echo "------------------------------------"
@@ -193,24 +197,21 @@ runs:
         echo "------------------------------------"
         echo "------------------------------------"
 
-    - name: Read task output from step summary
-      id: read-summary
-      if: always()
-      shell: bash
-      run: |
-        if [ -n "$GITHUB_STEP_SUMMARY" ] && [ -f "$GITHUB_STEP_SUMMARY" ] && [ -s "$GITHUB_STEP_SUMMARY" ]; then
+        if [ -s "$GITHUB_STEP_SUMMARY" ]; then
           echo "Step summary file exists and is non-empty: $GITHUB_STEP_SUMMARY"
           # Use multiline output syntax for GitHub Actions
           {
-            echo "content<<EOF"
+            echo "has-summary=true"
+            echo "summary-text<<__POE_EOF__"
             cat "$GITHUB_STEP_SUMMARY"
-            echo "EOF"
-          } >> $GITHUB_OUTPUT
-          echo "has_content=true" >> $GITHUB_OUTPUT
+            echo "__POE_EOF__"
+          } >> "$GITHUB_OUTPUT"
         else
-          echo "No step summary content found"
-          echo "has_content=false" >> $GITHUB_OUTPUT
+          echo "No step summary content found."
+          echo "has-summary=false" >> $GITHUB_OUTPUT
+          echo "summary-text=" >> $GITHUB_OUTPUT
         fi
+        exit "$EXIT_CODE"
 
     - name: Auto commit changes
       id: auto-commit
@@ -243,13 +244,13 @@ runs:
         reactions: "+1"
         body: |
           > ${{ inputs.success-message || format(' 🟦 Poe command `{0}` completed successfully.', steps.resolve-command.outputs.command) }}
-          ${{ steps.read-summary.outputs.has_content == 'true' && format('
-          
+          ${{ steps.run-poe-task.outputs.has-summary == 'true' && format('
+
           <details><summary>✳️ Show/Hide Summary Output</summary>
-          
+
           {0}
-          
-          </details>', steps.read-summary.outputs.content) || '' }}
+
+          </details>', steps.run-poe-task.outputs.content) || '' }}
 
     - name: Append failure comment
       if: failure() && steps.comment-start.outputs.comment-id
@@ -259,13 +260,13 @@ runs:
         reactions: confused
         body: |
           > ${{ inputs.failure-message || format('❌ Poe command `{0}` failed. Please inspect the logs.', steps.resolve-command.outputs.command) }}
-          ${{ steps.read-summary.outputs.has_content == 'true' && format('
-          
+          ${{ steps.run-poe-task.outputs.has-summary == 'true' && format('
+
           <details><summary>✴️ Show/Hide Summary Output</summary>
-          
+
           {0}
-          
-          </details>', steps.read-summary.outputs.content) || '' }}
+
+          </details>', steps.run-poe-task.outputs.summary-text) || '' }}
 
     # Create a new PR if no PR was provided
 
