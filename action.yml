@@ -257,8 +257,15 @@ runs:
       with:
         comment-id: ${{ steps.comment-start.outputs.comment-id }}
         reactions: confused
-        body: >
-          ${{ inputs.failure-message || format('❌ Poe command `{0}` failed. Please inspect the logs.', steps.resolve-command.outputs.command) }}
+        body: |
+          > ${{ inputs.failure-message || format('❌ Poe command `{0}` failed. Please inspect the logs.', steps.resolve-command.outputs.command) }}
+          ${{ steps.read-summary.outputs.has_content == 'true' && format('
+          
+          <details><summary>✴️ Show/Hide Summary Output</summary>
+          
+          {0}
+          
+          </details>', steps.read-summary.outputs.content) || '' }}
 
     # Create a new PR if no PR was provided
 
