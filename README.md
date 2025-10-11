@@ -72,6 +72,37 @@ If a `.tool-versions` file does not exist, or doesn't have versions specified, w
 - `poetry` - Default to latest version.
 - `python` - Default to version 3.11.
 
+## Publishing Task Output
+
+Tasks can optionally publish markdown output that will appear in both the GitHub job summary and as an expandable section in PR comments. This is useful for displaying test results, coverage reports, or other structured output.
+
+### How It Works
+
+To publish output, your poe task should check for the `GITHUB_STEP_SUMMARY` environment variable and write markdown content to it:
+
+```shell
+# In your poe task (pyproject.toml or poe_tasks.toml)
+[tasks.my-task]
+shell = """
+if [ -n "$GITHUB_STEP_SUMMARY" ]; then
+  echo '## Task Results' >> $GITHUB_STEP_SUMMARY
+  echo '' >> $GITHUB_STEP_SUMMARY
+  echo '- ✅ Step 1: Success' >> $GITHUB_STEP_SUMMARY
+  echo '- ✅ Step 2: Success' >> $GITHUB_STEP_SUMMARY
+  echo '' >> $GITHUB_STEP_SUMMARY
+  echo '**Status**: All steps completed! 🎉' >> $GITHUB_STEP_SUMMARY
+fi
+# Your actual task logic here
+echo 'Task completed'
+"""
+```
+
+The output will appear:
+- In the GitHub Actions job summary (visible in the workflow run page)
+- In PR comments as an expandable section with ✳️ "Show/Hide Summary Output" (on success) or ✴️ (on failure)
+
+**Note:** Always check if `GITHUB_STEP_SUMMARY` is defined before writing to it, as this variable is only available in GitHub Actions environments.
+
 ## Sample Workflows
 
 ### Sample Poe Slash Command (Generic)
