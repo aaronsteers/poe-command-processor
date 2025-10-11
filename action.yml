@@ -250,7 +250,7 @@ runs:
 
           {0}
 
-          </details>', steps.run-poe-task.outputs.content) || '' }}
+          </details>', steps.run-poe-task.outputs.summary-text) || '' }}
 
     - name: Append failure comment
       if: failure() && steps.comment-start.outputs.comment-id
