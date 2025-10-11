@@ -10,7 +10,7 @@ permissions:
   issues: write
 
 jobs:
-  test-with-summary:
+  test-success:
     runs-on: ubuntu-latest
     if: github.event.pull_request.draft == false
     steps:
@@ -19,14 +19,14 @@ jobs:
         with:
           fetch-depth: 1
 
-      - name: Run `poe test-with-summary` [Poe Command Processor]
+      - name: Run `poe test-success` [Poe Command Processor]
         uses: ./
         with:
           pr: ${{ github.event.pull_request.number }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          command: test-with-summary
+          command: test-success
 
-  test-without-summary:
+  test-success-with-summary:
     runs-on: ubuntu-latest
     if: github.event.pull_request.draft == false
     steps:
@@ -35,9 +35,26 @@ jobs:
         with:
           fetch-depth: 1
 
-      - name: Run `poe test-without-summary` [Poe Command Processor]
+      - name: Run `poe test-success-with-summary` [Poe Command Processor]
         uses: ./
         with:
           pr: ${{ github.event.pull_request.number }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          command: test-without-summary
+          command: test-success-with-summary
+
+  test-fail-with-summary:
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.draft == false
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Run `poe test-fail-with-summary` [Poe Command Processor]
+        uses: ./
+        continue-on-error: true
+        with:
+          pr: ${{ github.event.pull_request.number }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          command: test-fail-with-summary
