@@ -193,6 +193,25 @@ runs:
         echo "------------------------------------"
         echo "------------------------------------"
 
+    - name: Read task output from step summary
+      id: read-summary
+      if: always()
+      shell: bash
+      run: |
+        if [ -f "$GITHUB_STEP_SUMMARY" ] && [ -s "$GITHUB_STEP_SUMMARY" ]; then
+          echo "Step summary file exists and is non-empty"
+          # Use multiline output syntax for GitHub Actions
+          {
+            echo "content<<EOF"
+            cat "$GITHUB_STEP_SUMMARY"
+            echo "EOF"
+          } >> $GITHUB_OUTPUT
+          echo "has_content=true" >> $GITHUB_OUTPUT
+        else
+          echo "No step summary content found"
+          echo "has_content=false" >> $GITHUB_OUTPUT
+        fi
+
     - name: Auto commit changes
       id: auto-commit
       uses: stefanzweifel/git-auto-commit-action@v5
@@ -215,7 +234,7 @@ runs:
         body: >
           🤖 Auto-commit successful: ${{ steps.auto-commit.outputs.commit_hash }}
 
-    - name: Append no-op comment
+    - name: Append success comment with output
       if: >
         steps.comment-start.outputs.comment-id
       uses: peter-evans/create-or-update-comment@v4
@@ -224,6 +243,13 @@ runs:
         reactions: "+1"
         body: |
           > ${{ inputs.success-message || format(' 🟦 Poe command `{0}` completed successfully.', steps.resolve-command.outputs.command) }}
+          ${{ steps.read-summary.outputs.has_content == 'true' && format('
+          
+          <details><summary>✳️ Show/Hide Summary Output</summary>
+          
+          {0}
+          
+          </details>', steps.read-summary.outputs.content) || '' }}
 
     - name: Append failure comment
       if: failure() && steps.comment-start.outputs.comment-id
