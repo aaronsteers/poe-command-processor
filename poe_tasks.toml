@@ -1,3 +1,20 @@
 [tasks]
 test = "echo 'Dummy tests...'"
 test-fail = "exit 1"
+
+test-with-summary = """
+if [ -n "$GITHUB_STEP_SUMMARY" ]; then
+  echo '## Test Results' >> $GITHUB_STEP_SUMMARY
+  echo '' >> $GITHUB_STEP_SUMMARY
+  echo 'This is a test of the GITHUB_STEP_SUMMARY feature.' >> $GITHUB_STEP_SUMMARY
+  echo '' >> $GITHUB_STEP_SUMMARY
+  echo '- ✅ Item 1: Success' >> $GITHUB_STEP_SUMMARY
+  echo '- ✅ Item 2: Success' >> $GITHUB_STEP_SUMMARY
+  echo '- ✅ Item 3: Success' >> $GITHUB_STEP_SUMMARY
+  echo '' >> $GITHUB_STEP_SUMMARY
+  echo '**Status**: All tests passed! 🎉' >> $GITHUB_STEP_SUMMARY
+fi
+echo 'Test with summary completed'
+"""
+
+test-without-summary = "echo 'Test without summary completed'"
