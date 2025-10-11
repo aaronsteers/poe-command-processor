@@ -78,6 +78,15 @@ runs:
         echo "Resolved command: ${command}"
         echo command="$command" >> $GITHUB_OUTPUT
 
+    - name: Create temp file for task output
+      id: create-temp-file
+      shell: bash
+      run: |
+        TEMP_FILE=$(mktemp)
+        echo "summary_file=$TEMP_FILE" >> $GITHUB_OUTPUT
+        echo "POE_SUMMARY_FILE=$TEMP_FILE" >> $GITHUB_ENV
+        echo "Created temporary file for task output: $TEMP_FILE"
+
     - name: Get PR info
       if: inputs.pr
       id: pr-info
@@ -198,15 +207,21 @@ runs:
       if: always()
       shell: bash
       run: |
-        if [ -f "$GITHUB_STEP_SUMMARY" ] && [ -s "$GITHUB_STEP_SUMMARY" ]; then
-          echo "Step summary file exists and is non-empty"
+        SUMMARY_FILE="${POE_SUMMARY_FILE:-$GITHUB_STEP_SUMMARY}"
+        if [ -f "$SUMMARY_FILE" ] && [ -s "$SUMMARY_FILE" ]; then
+          echo "Step summary file exists and is non-empty: $SUMMARY_FILE"
           # Use multiline output syntax for GitHub Actions
           {
             echo "content<<EOF"
-            cat "$GITHUB_STEP_SUMMARY"
+            cat "$SUMMARY_FILE"
             echo "EOF"
           } >> $GITHUB_OUTPUT
           echo "has_content=true" >> $GITHUB_OUTPUT
+          
+          # Also write to GITHUB_STEP_SUMMARY for job summary visibility
+          if [ -n "$GITHUB_STEP_SUMMARY" ] && [ "$SUMMARY_FILE" != "$GITHUB_STEP_SUMMARY" ]; then
+            cat "$SUMMARY_FILE" >> "$GITHUB_STEP_SUMMARY"
+          fi
         else
           echo "No step summary content found"
           echo "has_content=false" >> $GITHUB_OUTPUT
