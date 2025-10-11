@@ -4,19 +4,16 @@ test-fail = "exit 1"
 
 [tasks.test-with-summary]
 shell = """
-# Determine which file to write to (prefer POE_SUMMARY_FILE, fall back to GITHUB_STEP_SUMMARY)
-OUTPUT_FILE="${POE_SUMMARY_FILE:-$GITHUB_STEP_SUMMARY}"
-
-if [ -n "$OUTPUT_FILE" ]; then
-  echo '## Test Results' >> "$OUTPUT_FILE"
-  echo '' >> "$OUTPUT_FILE"
-  echo 'This is a test of the GITHUB_STEP_SUMMARY feature.' >> "$OUTPUT_FILE"
-  echo '' >> "$OUTPUT_FILE"
-  echo '- ✅ Item 1: Success' >> "$OUTPUT_FILE"
-  echo '- ✅ Item 2: Success' >> "$OUTPUT_FILE"
-  echo '- ✅ Item 3: Success' >> "$OUTPUT_FILE"
-  echo '' >> "$OUTPUT_FILE"
-  echo '**Status**: All tests passed! 🎉' >> "$OUTPUT_FILE"
+if [ -n "$GITHUB_STEP_SUMMARY" ]; then
+  echo '## Test Results' >> "$GITHUB_STEP_SUMMARY"
+  echo '' >> "$GITHUB_STEP_SUMMARY"
+  echo 'This is a test of the GITHUB_STEP_SUMMARY feature.' >> "$GITHUB_STEP_SUMMARY"
+  echo '' >> "$GITHUB_STEP_SUMMARY"
+  echo '- ✅ Item 1: Success' >> "$GITHUB_STEP_SUMMARY"
+  echo '- ✅ Item 2: Success' >> "$GITHUB_STEP_SUMMARY"
+  echo '- ✅ Item 3: Success' >> "$GITHUB_STEP_SUMMARY"
+  echo '' >> "$GITHUB_STEP_SUMMARY"
+  echo '**Status**: All tests passed! 🎉' >> "$GITHUB_STEP_SUMMARY"
 fi
 echo 'Test with summary completed'
 """
