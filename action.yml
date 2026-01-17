@@ -267,6 +267,16 @@ runs:
           {0}
 
           </details>', steps.run-poe-task.outputs.summary-text) || '' }}
+    - name: Append cancellation comment
+      if: cancelled() && steps.comment-start.outputs.comment-id
+      uses: peter-evans/create-or-update-comment@v4
+      with:
+        comment-id: ${{ steps.comment-start.outputs.comment-id }}
+        reactions: eyes
+        body: |
+          > ${{ inputs.failure-message || format('⚠️ Poe command `{0}` was cancelled.', steps.resolve-command.outputs.command) }}
+
+
 
     # Create a new PR if no PR was provided
 
