@@ -1,10 +1,10 @@
 name: Poe Slash Command Processor
 description: |
   Executes a PoeThePoet command. Designed to be used in slash commands, and can auto-commit changes back to the PR's branch.
+author: aaronsteers
 branding:
   icon: check-circle
   color: blue
-
 
 inputs:
   command:
@@ -39,6 +39,9 @@ inputs:
 runs:
   using: "composite"
   steps:
+    - name: Resolve CI Vars
+      id: vars
+      uses: aaronsteers/resolve-ci-vars-action@v0
 
     - name: Resolve poe command
       id: resolve-command
@@ -78,26 +81,6 @@ runs:
         echo "Resolved command: ${command}"
         echo command="$command" >> $GITHUB_OUTPUT
 
-    - name: Get PR info
-      if: inputs.pr
-      id: pr-info
-      shell: bash
-      run: |
-        PR_JSON=$(gh api repos/${{ github.repository }}/pulls/${{ inputs.pr }})
-        echo "::group::👀 Debug PR JSON"
-        echo $PR_JSON | jq
-        echo $PR_JSON | jq -r .head.repo.full_name
-        echo $PR_JSON | jq -r .head.ref
-        echo "::endgroup::"
-        echo repo=$(echo $PR_JSON | jq -r .head.repo.full_name) >> $GITHUB_OUTPUT
-        echo branch=$(echo $PR_JSON | jq -r .head.ref) >> $GITHUB_OUTPUT
-      env:
-        GH_TOKEN: ${{ inputs.github-token }}
-
-    - name: Generate run link
-      id: vars
-      shell: bash
-      run: echo "run-url=https://github.com/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" >> "$GITHUB_OUTPUT"
 
     - name: Post job start comment
       if: inputs.pr || inputs.comment-id
@@ -112,20 +95,12 @@ runs:
           > [Link to job logs.](${{ steps.vars.outputs.run-url }})
           >
 
-    - name: Checkout PR
-      if: inputs.pr
+    - name: Checkout Branch [PR Head, or Resolved Ref]
       uses: actions/checkout@v4
       with:
-        ref: ${{ steps.pr-info.outputs.branch }}
+        repository: ${{ steps.vars.outputs.resolved-repo-name-full }}
+        ref: ${{ steps.vars.outputs.resolved-git-branch }}
         submodules: true  # Initialize submodules if needed
-        repository: ${{ steps.pr-info.outputs.repo }}
-        token: ${{ inputs.github-token }}
-
-    - name: Checkout default branch (no existing PR)
-      if: "! inputs.pr"
-      uses: actions/checkout@v4
-      with:
-        repository: ${{ steps.pr-info.outputs.repo }}
         token: ${{ inputs.github-token }}
 
     - name: Fetch tool versions
