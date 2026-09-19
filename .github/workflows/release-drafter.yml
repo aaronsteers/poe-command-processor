@@ -4,26 +4,29 @@ on:
   push:
     branches:
       - main
+  workflow_dispatch:
+    inputs:
+      dry-run:
+        description: Compute the next version without creating or publishing a release
+        type: boolean
+        default: false
 
 concurrency:
   group: release-drafter
   cancel-in-progress: false
 
-permissions:
-  contents: read
-
 jobs:
-  update_release_draft:
+  draft_release:
+    name: Create Release
     permissions:
       contents: write
-      pull-requests: read
+      pull-requests: write
     runs-on: ubuntu-latest
     steps:
-      # Drafts the next Release notes as Pull Requests are merged into "main"
-      # Pinned to v6.0.0 to avoid v6.1.0 bug: https://github.com/release-drafter/release-drafter/issues/1425
-      - uses: release-drafter/release-drafter@v6.0.0
+      - name: Create or publish release
+        uses: aaronsteers/semantic-pr-release-drafter@v2.4.4
         with:
-          config-name: release-drafter.yml
-          disable-autolabeler: true
+          publish: true
+          dry-run: ${{ inputs.dry-run || false }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
