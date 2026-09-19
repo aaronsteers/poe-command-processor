@@ -1,6 +1,7 @@
 name: Release Drafter
 
 on:
+  workflow_dispatch: {}
   push:
     branches:
       - main
@@ -9,21 +10,36 @@ concurrency:
   group: release-drafter
   cancel-in-progress: false
 
-permissions:
-  contents: read
-
 jobs:
-  update_release_draft:
+  draft_release:
+    name: Draft or Publish Release
     permissions:
       contents: write
-      pull-requests: read
+      pull-requests: write
     runs-on: ubuntu-latest
     steps:
-      # Drafts the next Release notes as Pull Requests are merged into "main"
-      # Pinned to v6.0.0 to avoid v6.1.0 bug: https://github.com/release-drafter/release-drafter/issues/1425
-      - uses: release-drafter/release-drafter@v6.0.0
+      - name: Create or publish release
+        id: release-drafter
+        uses: aaronsteers/semantic-pr-release-drafter@v2.4.4
         with:
-          config-name: release-drafter.yml
-          disable-autolabeler: true
+          # Pushes to main publish immediately; manual dispatches only refresh the draft.
+          publish: ${{ github.event_name == 'push' }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # Releases published with GITHUB_TOKEN do not fire tag-push workflows,
+      # so the major tag is moved here rather than by update-major-tags.yml.
+      - name: Check out repository
+        if: github.event_name == 'push'
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Update major version tag
+        if: github.event_name == 'push'
+        env:
+          MAJOR_TAG: v${{ steps.release-drafter.outputs.major-version }}
+          TARGET_SHA: ${{ steps.release-drafter.outputs.resolved-sha }}
+        run: |
+          git tag -f "$MAJOR_TAG" "$TARGET_SHA"
+          git push -f origin "$MAJOR_TAG"
